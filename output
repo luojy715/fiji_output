@@ -1,0 +1,54 @@
+// @File(label="选择保存目录", style="directory") outputDir
+// @String(label="文件后缀", value="_profiles_gt15_wide.csv") file_suffix
+
+// Macro: 获取堆栈中每个切片的Plot Profile，
+// 并将每个切片的数据保存为CSV文件中的一行（宽格式）。
+// 只输出强度值大于15的数据点，其余留空。
+
+// --- 1. 检查和准备 ---
+if (nImages == 0) {
+    exit("错误：没有打开的图像。");
+}
+if (selectionType() < 5 || selectionType() > 7) { // 检查是否是线状选择
+    exit("错误：请先用线段工具 (Line Tool) 画一个ROI。");
+}
+
+// --- 2. 获取基本信息 ---
+imageTitle = getTitle();
+Slices = nSlices();
+
+// 从文件名中移除扩展名
+dotIndex = lastIndexOf(imageTitle, ".");
+if (dotIndex != -1) {
+    baseName = substring(imageTitle, 0, dotIndex);
+} else {
+    baseName = imageTitle;
+}
+
+// 构造输出文件路径
+outputPath = outputDir + File.separator + baseName + file_suffix;
+
+// --- 3. 打开文件并写入表头 (Header) ---
+print("正在准备文件: " + outputPath);
+
+// 先获取一次profile，以确定数据长度，用于生成表头
+setSlice(1); 
+profileData = getProfile();
+profileLength = lengthOf(profileData);
+if (profileLength == 0) {
+    exit("无法获取Profile数据，请检查ROI是否有效。");
+}
+
+// 打开文件用于写入
+fileHandle = File.open(outputPath);
+if (fileHandle == -1) {
+    exit("错误：无法创建或打开文件进行写入。请检查目录权限。");
+}
+
+// 动态创建表头 (e.g., "Slice,Pixel_0,Pixel_1,...")
+header = "Slice";
+for (j = 0; j < profileLength; j++) {
+    header = header + ",Pixel_" + j;
+}
+// 将表头写入文件
+print(fileHandle, header);
