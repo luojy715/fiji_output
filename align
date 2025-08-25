@@ -1,0 +1,62 @@
+Sub AlignRowPeakToColumn()
+    Dim srcWS As Worksheet, dstWS As Worksheet
+    Dim srcRange As Range
+    Dim rowCount As Long, colCount As Long
+    Dim targetCol As Long
+    Dim r As Long, c As Long
+    Dim maxVal As Variant, maxCol As Long
+    Dim tempArr() As Variant
+    Dim i As Long
+
+    '设置参数
+    Set srcWS = ThisWorkbook.Worksheets("Sheet7") '原始数据表
+    Set dstWS = ThisWorkbook.Worksheets("Sheet8") '输出表
+    Set srcRange = srcWS.Range("C10:M17")         '数据区域
+    targetCol = 7                                 '峰值对齐到第2列
+
+    rowCount = srcRange.Rows.Count
+    colCount = srcRange.Columns.Count
+
+    '清空目标区域
+    dstWS.Range(dstWS.Cells(1, 1), dstWS.Cells(rowCount, colCount)).ClearContents
+
+    For r = 1 To rowCount
+        '找最大值及其列
+        maxVal = srcRange.Cells(r, 1).Value
+        maxCol = 1
+        For c = 2 To colCount
+            If srcRange.Cells(r, c).Value > maxVal Then
+                maxVal = srcRange.Cells(r, c).Value
+                maxCol = c
+            End If
+        Next c
+
+        '构造对齐后的一行
+        ReDim tempArr(1 To colCount)
+        For i = 1 To colCount
+            tempArr(i) = ""
+        Next i
+
+        For c = 1 To colCount
+            Dim newPos As Long
+            newPos = c + (targetCol - maxCol)
+            If newPos >= 1 And newPos <= colCount Then
+                tempArr(newPos) = srcRange.Cells(r, c).Value
+            End If
+        Next c
+
+        '写入Sheet2
+        For c = 1 To colCount
+            dstWS.Cells(r, c).Value = tempArr(c)
+        Next c
+    Next r
+    
+     Dim avgRow As Long
+    avgRow = rowCount + 2
+    For c = 1 To colCount
+        dstWS.Cells(avgRow, c).Formula = "=AVERAGE(" & dstWS.Cells(1, c).Address & ":" & dstWS.Cells(rowCount, c).Address & ")"
+    Next c
+
+    MsgBox "每行峰值已对齐到第" & targetCol & "列！平均值已写入下方。"
+End Sub
+
